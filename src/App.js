@@ -1,25 +1,39 @@
-import logo from './logo.svg';
-import './App.css';
+import { ApolloProvider, useReactiveVar } from '@apollo/client';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from 'styled-components';
 
-function App() {
+import { darkTheme, GlobalStyles, lightTheme } from './styles';
+import { client, darkModeVar, isLoggedInVar } from './apollo';
+import routes from './routes';
+import Home from './screens/Home';
+import Login from './screens/Login';
+import NotFound from './screens/NotFound';
+import SignUp from './screens/SignUp';
+import { HelmetProvider } from 'react-helmet-async';
+
+export default function App() {
+  const isLoggedIn = useReactiveVar(isLoggedInVar);
+  const darkMode = useReactiveVar(darkModeVar);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ApolloProvider client={client}>
+      <HelmetProvider>
+        <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+          <GlobalStyles />
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path={routes.home}
+                element={isLoggedIn ? <Home /> : <Login />}
+              />
+              {!isLoggedIn && (
+                <Route path={routes.signUp} element={<SignUp />} />
+              )}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
+      </HelmetProvider>
+    </ApolloProvider>
   );
 }
-
-export default App;
