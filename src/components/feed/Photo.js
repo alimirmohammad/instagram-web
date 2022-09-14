@@ -12,6 +12,7 @@ import styled from 'styled-components';
 
 import Avatar from '../Avatar';
 import { FatText } from '../shared';
+import Comments from './Comments';
 
 const TOGGLE_LIKE_MUTATION = gql`
   mutation toggleLike($id: Int!) {
@@ -72,20 +73,26 @@ const Likes = styled(FatText)`
   display: block;
 `;
 
-export default function Photo({ id, user, file, isLiked, likes }) {
+export default function Photo({
+  id,
+  user,
+  file,
+  isLiked,
+  likes,
+  caption,
+  commentNumber,
+  comments,
+}) {
   const [toggleLikeMutation] = useMutation(TOGGLE_LIKE_MUTATION, {
     variables: { id },
     update: (cache, result) => {
       if (!result?.data?.toggleLike?.ok) return;
-      cache.writeFragment({
+      cache.modify({
         id: `Photo:${id}`,
-        fragment: gql`
-          fragment ToggleLink on Photo {
-            isLiked
-            likes
-          }
-        `,
-        data: { isLiked: !isLiked, likes: isLiked ? likes - 1 : likes + 1 },
+        fields: {
+          isLiked: prev => !prev,
+          likes: prev => (isLiked ? prev - 1 : prev + 1),
+        },
       });
     },
   });
@@ -118,6 +125,12 @@ export default function Photo({ id, user, file, isLiked, likes }) {
           </div>
         </PhotoActions>
         <Likes>{likes === 1 ? '1 like' : `${likes} likes`}</Likes>
+        <Comments
+          author={user.username}
+          caption={caption}
+          commentNumber={commentNumber}
+          comments={comments}
+        />
       </PhotoData>
     </PhotoContainer>
   );
@@ -132,4 +145,18 @@ Photo.propTypes = {
   file: propTypes.string.isRequired,
   isLiked: propTypes.bool.isRequired,
   likes: propTypes.number.isRequired,
+  caption: propTypes.string,
+  commentNumber: propTypes.number.isRequired,
+  comments: propTypes.arrayOf(
+    propTypes.shape({
+      id: propTypes.number.isRequired,
+      user: propTypes.shape({
+        avatar: propTypes.string,
+        username: propTypes.string.isRequired,
+      }),
+      text: propTypes.string.isRequired,
+      isMine: propTypes.bool.isRequired,
+      createdAt: propTypes.string.isRequired,
+    })
+  ),
 };
