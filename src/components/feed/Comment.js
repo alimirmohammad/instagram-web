@@ -53,7 +53,9 @@ export default function Comment({ id, photoId, isMine, author, text }) {
 
   return (
     <CommentContainer>
-      <FatText>{author}</FatText>
+      <Link to={`/users/${author}`}>
+        <FatText>{author}</FatText>
+      </Link>
       <CommentCaption>
         {text.split(' ').map((word, index) =>
           /#[\w]+/.test(word) ? (
